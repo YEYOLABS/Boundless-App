@@ -1,0 +1,68 @@
+{
+    "attachments": [], 
+    "date": "2025-11-26T04:59:39.198Z", 
+    "inspectionId": 2, 
+    "items": [
+        ], 
+    "tourId": null
+ }
+
+
+
+
+
+{
+    "inspectionId": 2,
+  "tourId": null,
+  "date": "2025-11-25T13:32:03.650Z",
+  "items": [
+    {
+      "inspectionItemId": 48,
+      "value": "67123",
+      "attachment": 
+"data:image/jpeg;base64,"
+    },
+    {
+      "inspectionItemId": 49,
+      "value": "5",
+      "attachment": null
+    },
+    {
+      "inspectionItemId": 50,
+      "value": "5",
+      "attachment": null
+    },
+    {
+      "inspectionItemId": 51,
+      "value": "5",
+      "attachment": null
+    },
+    {
+      "inspectionItemId": 52,
+      "value": "5",
+      "attachment": null
+    },
+    {
+      "inspectionItemId": 53,
+      "value": "5",
+      "attachment": null
+    },
+    {
+      "inspectionItemId": 54,
+      "value": "5",
+      "attachment": null
+    },
+    {
+      "inspectionItemId": 55,
+      "value": "5",
+      "attachment": null
+    },
+    {
+      "inspectionItemId": 56,
+      "value": "5",
+      "attachment": null
+    }
+  ],
+  "attachments": [
+  ]
+}

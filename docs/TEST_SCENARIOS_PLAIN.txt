@@ -1,0 +1,403 @@
+Boundless Driver – Test Scenarios (Plain Text Version)
+
+Scope
+-----
+This document describes high‑level manual and automation‑oriented test scenarios for the
+Boundless Driver app. It is written in simple plain text so it can be copied into email
+or Word documents.
+
+Covered areas:
+- Login
+- Daily / Evening inspection
+- Pre‑tour / Daily / Post‑tour inspections
+- Float management
+- Activity history
+
+Assumptions and Test Data
+-------------------------
+- Valid demo credentials: Username "Malcolm", Password "1961".
+- The app is connected to a test API environment.
+- Test images are available for odometer, oil level, and receipts.
+
+1. Login
+========
+
+Scenario LGN‑001 – Successful login
+Purpose:
+  Verify that a user with valid credentials can log in successfully.
+Preconditions:
+  - App is installed and opens to the login screen.
+Steps:
+  1. Enter username "Malcolm".
+  2. Enter password "1961".
+  3. Tap the "Login" button.
+Expected result:
+  - A loading indicator is shown while logging in.
+  - No error message is displayed.
+  - User is navigated to the main home/dashboard screen.
+
+Scenario LGN‑002 – Missing username or password
+Purpose:
+  Verify that both fields are required.
+Preconditions:
+  - App is on the login screen.
+Steps:
+  1. Leave the username field empty and enter any password.
+  2. Tap "Login".
+  3. Repeat with a username filled and password empty.
+Expected result:
+  - An alert is shown stating that both username and password are required.
+  - The user remains on the login screen.
+
+Scenario LGN‑003 – Invalid credentials
+Purpose:
+  Verify that invalid credentials are rejected with a clear message.
+Preconditions:
+  - App is on the login screen.
+Steps:
+  1. Enter an incorrect username and/or password.
+  2. Tap "Login".
+Expected result:
+  - An alert is shown indicating that the credentials are invalid.
+  - Suggested demo credentials may be shown in the message.
+  - The user remains on the login screen.
+
+Scenario LGN‑004 – Web CORS warning (web testing only)
+Purpose:
+  Verify that the app explains CORS limitations when running in a browser.
+Preconditions:
+  - App is running in a web browser build.
+Steps:
+  1. Open the login screen in the browser.
+  2. Attempt to log in against a backend that does not allow CORS.
+Expected result:
+  - A warning card appears explaining that the app is designed for mobile.
+  - The login failure message mentions CORS / browser limitations.
+
+2. Daily / Evening Inspection
+=============================
+
+Scenario DLY‑001 – Initial load and current check type
+Purpose:
+  Verify that the screen loads the correct daily/evening check type and items.
+Preconditions:
+  - User is logged in.
+Steps:
+  1. Navigate to the Daily/Evening Inspection screen.
+Expected result:
+  - A header is shown for the daily/evening inspection.
+  - A progress bar is visible.
+  - The list of inspection items is loaded.
+
+Scenario DLY‑002 – Already completed banner
+Purpose:
+  Confirm that the user is warned if the daily check was already completed today.
+Preconditions:
+  - A daily check has been completed for the current day.
+Steps:
+  1. Open the Daily/Evening Inspection screen.
+Expected result:
+  - A banner appears stating that the daily check was already completed today.
+
+Scenario DLY‑003 – Odometer reading and dashboard photo required
+Purpose:
+  Ensure that odometer and dashboard photo are mandatory.
+Preconditions:
+  - User is on the Daily/Evening Inspection screen.
+Steps:
+  1. Leave the odometer reading empty (or invalid).
+  2. Do not add a dashboard photo.
+  3. Attempt to submit the inspection.
+Expected result:
+  - Submission is blocked.
+  - A clear message explains that odometer and dashboard photo are required.
+
+Scenario DLY‑004 – Required photos for specific items
+Purpose:
+  Ensure that items marked as requiring a photo cannot be submitted without one.
+Preconditions:
+  - User is on the Daily/Evening Inspection screen.
+Steps:
+  1. For an item that requires a photo, enter a value but do not add a photo.
+  2. Attempt to submit the inspection.
+Expected result:
+  - Submission is blocked or the item is highlighted.
+  - A message explains that a photo is required for that item.
+
+Scenario DLY‑005 – Full successful submission
+Purpose:
+  Verify the normal “all good” path.
+Preconditions:
+  - User is on the Daily/Evening Inspection screen.
+Steps:
+  1. Enter a valid odometer reading.
+  2. Add a dashboard photo of the odometer.
+  3. Complete all inspection items with valid values.
+  4. Add any additional required photos.
+  5. Tap "Submit" and confirm in the confirmation dialog.
+Expected result:
+  - A confirmation message is displayed indicating success.
+  - The daily check is recorded as completed for the day.
+  - The screen may navigate back to the previous page after a short delay.
+
+Scenario DLY‑006 – Submit with some items missing
+Purpose:
+  Check behaviour when some items are left blank.
+Preconditions:
+  - User is on the Daily/Evening Inspection screen.
+Steps:
+  1. Fill in only some of the items.
+  2. Tap "Submit Daily Inspection".
+  3. When prompted, choose the option to submit anyway.
+Expected result:
+  - A dialog shows how many items are completed and the percentage complete.
+  - If the user confirms, the inspection is still submitted.
+
+3. Pre‑tour, Daily and Post‑tour Inspections
+============================================
+
+Scenario INS‑001 – Items shown per inspection type
+Purpose:
+  Confirm that each inspection type shows the correct set of items.
+Preconditions:
+  - User is logged in.
+Steps:
+  1. Open the Inspections screen with type = "PreTour".
+  2. Note the items displayed.
+  3. Repeat with type = "Daily".
+  4. Repeat with type = "PostTour".
+Expected result:
+  - For each type, only the relevant items are shown.
+  - The odometer section is always visible.
+
+Scenario INS‑002 – Odometer and photo validation
+Purpose:
+  Ensure odometer and dashboard photo are mandatory for inspections.
+Preconditions:
+  - User is on the Inspections screen.
+Steps:
+  1. Leave the odometer value empty and/or omit the dashboard photo.
+  2. Attempt to submit the inspection.
+Expected result:
+  - Submission is blocked.
+  - A message indicates that odometer and dashboard photo are required.
+
+Scenario INS‑003 – Yes / No toggle behaviour
+Purpose:
+  Confirm that Yes/No checklist items toggle correctly.
+Preconditions:
+  - At least one item of type Yes/No is visible.
+Steps:
+  1. Tap the checkbox for a Yes/No item multiple times.
+Expected result:
+  - The state alternates between checked and unchecked.
+
+Scenario INS‑004 – Oil photo required (example item)
+Purpose:
+  Ensure that the specific oil-level item which requires a photo cannot be submitted without it.
+Preconditions:
+  - The oil-level item is included in the current inspection type.
+Steps:
+  1. Enter a value for the oil item.
+  2. Do not attach an oil photo.
+  3. Attempt to submit the inspection.
+Expected result:
+  - Submission is blocked or a clear error is shown.
+  - When a valid photo is attached and you resubmit, the request succeeds.
+
+Scenario INS‑005 – Successful inspection submission
+Purpose:
+  Verify the normal successful path for inspections.
+Preconditions:
+  - User is on the Inspections screen.
+Steps:
+  1. Enter a valid odometer reading and add the dashboard photo.
+  2. Complete all visible items with valid values.
+  3. Add all required photos (for example, oil level).
+  4. Tap "Submit Inspection".
+Expected result:
+  - A success message is shown.
+  - The inspection is recorded in the backend system.
+
+4. Float Management
+===================
+
+Scenario FLT‑001 – Loading float data
+Purpose:
+  Confirm that the balance and expenses load correctly.
+Preconditions:
+  - User is logged in and has an active float.
+Steps:
+  1. Navigate to the Float Management screen.
+Expected result:
+  - While data is loading, a spinner or loading message is shown.
+  - Once loaded, the float balance, total expenses and remaining balance are displayed.
+
+Scenario FLT‑002 – Required fields when adding an expense
+Purpose:
+  Ensure that category, amount and description are all mandatory.
+Preconditions:
+  - User is on the "Add Expenses" tab.
+Steps:
+  1. Leave one or more of the fields (category, amount, description) empty.
+  2. Tap "Add Expense".
+Expected result:
+  - An error message requests that all fields be completed.
+  - No expense is created.
+
+Scenario FLT‑003 – Invalid amount values
+Purpose:
+  Validate amount input.
+Preconditions:
+  - User is on the "Add Expenses" tab.
+Steps:
+  1. Enter a non‑numeric amount or an amount less than or equal to zero.
+  2. Tap "Add Expense".
+Expected result:
+  - An error message indicates that the amount is invalid.
+  - No expense is created.
+
+Scenario FLT‑004 – Missing receipt photo
+Purpose:
+  Ensure that a receipt photo is mandatory.
+Preconditions:
+  - User is on the "Add Expenses" tab.
+Steps:
+  1. Fill in category, amount and description.
+  2. Do not attach a receipt image.
+  3. Tap "Add Expense".
+Expected result:
+  - An error message indicates that a receipt photo is required.
+  - No expense is created.
+
+Scenario FLT‑005 – Low and negative balance warnings
+Purpose:
+  Confirm that the user is warned when the remaining float balance is low or negative.
+Preconditions:
+  - User has existing expenses and a remaining balance close to zero.
+Steps:
+  1. Add expenses until the remaining balance drops below the defined low threshold.
+  2. Add additional expenses until the remaining balance becomes negative.
+Expected result:
+  - A low‑balance warning message or card appears when near zero.
+  - A different message or style is shown once the balance is negative.
+
+Scenario FLT‑006 – Successful expense submission
+Purpose:
+  Verify the normal successful path for adding an expense.
+Preconditions:
+  - User is on the "Add Expenses" tab.
+Steps:
+  1. Select a category (for example, Fuel).
+  2. Enter a valid positive amount.
+  3. Enter a meaningful description.
+  4. Attach a clear receipt photo.
+  5. Tap "Add Expense".
+  6. If a warning appears about exceeding the balance, confirm that you want to proceed.
+Expected result:
+  - A success message confirms that the expense was added.
+  - The form is cleared.
+  - The expense appears in the expense history list.
+
+Scenario FLT‑007 – Viewing expense history
+Purpose:
+  Check that previously captured expenses are visible.
+Preconditions:
+  - There are existing expenses in the system.
+Steps:
+  1. Navigate to the "History" tab on the Float Management screen.
+Expected result:
+  - A list of expenses is displayed.
+  - Each item shows category, description, date/time and amount.
+
+Scenario FLT‑008 – Viewing a receipt image
+Purpose:
+  Ensure that stored receipt images can be viewed.
+Preconditions:
+  - At least one expense has a stored receipt image.
+Steps:
+  1. On the "History" tab, locate an expense with a receipt badge or link.
+  2. Tap the option to view the receipt.
+Expected result:
+  - A full‑screen or large modal shows the receipt image.
+  - Closing the modal returns to the list.
+
+Scenario FLT‑009 – Deleting an expense
+Purpose:
+  Confirm that an expense can be deleted with confirmation.
+Preconditions:
+  - At least one expense exists in the history.
+Steps:
+  1. On the "History" tab, tap the delete icon for an expense.
+  2. Confirm the deletion when prompted.
+Expected result:
+  - The selected expense is removed from the list.
+  - A confirmation message is shown.
+
+5. Activity History
+===================
+
+Scenario HIS‑001 – Loading state
+Purpose:
+  Confirm that a loading state is shown while history data is retrieved.
+Preconditions:
+  - User is logged in.
+Steps:
+  1. Navigate to the Activity History screen, ideally on a slow connection.
+Expected result:
+  - A loading indicator and text such as "Loading history..." are displayed.
+  - Once loading completes, either history items or an empty state are shown.
+
+Scenario HIS‑002 – Empty history
+Purpose:
+  Verify the behaviour when there is no historical activity.
+Preconditions:
+  - There is no history data for the user.
+Steps:
+  1. Navigate to the Activity History screen.
+Expected result:
+  - An empty state is displayed (for example an icon and "No activity found" message).
+
+Scenario HIS‑003 – Filtering by type
+Purpose:
+  Confirm that the filter controls correctly change the list contents.
+Preconditions:
+  - There is a mixture of different history entries (daily checks, inspections, float, etc.).
+Steps:
+  1. On the Activity History screen, tap each filter option in turn (All, Daily Check, Pre‑Tour, Post‑Tour, Float, Inspection).
+Expected result:
+  - The list updates so that only relevant items for the selected type are shown.
+
+Scenario HIS‑004 – Icons and colours per type
+Purpose:
+  Ensure that each history type has a consistent visual identity.
+Preconditions:
+  - There is at least one entry of each type.
+Steps:
+  1. On the Activity History screen, review the icon and colour used for each type of item.
+Expected result:
+  - Daily checks, pre‑tour, post‑tour, inspection and expense/float each have a consistent icon and colour.
+
+6. General Non‑functional Checks
+================================
+
+Scenario GEN‑001 – Basic accessibility
+Purpose:
+  Confirm that the app is usable for a wide range of users.
+Steps:
+  1. Review key screens for font size, colour contrast and touch target size.
+Expected result:
+  - Text is readable.
+  - Buttons and touch targets are large enough to tap comfortably.
+
+Scenario GEN‑002 – Error handling and resilience
+Purpose:
+  Verify that network or server errors are handled gracefully.
+Steps:
+  1. For each main feature (login, inspections, float, history), temporarily simulate an API error or disconnect the network.
+Expected result:
+  - A clear user‑friendly error message is displayed.
+  - The app does not crash.
+  - The user can retry or navigate back safely.
+
+End of document.
