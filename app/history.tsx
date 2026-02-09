@@ -39,7 +39,7 @@ export default function HistoryScreen() {
   const fetchHistory = async () => {
     try {
       const response = await fetchData({
-        endPoint: '/api/v1/inspection/3',
+        endPoint: '/get-inspection-items',
         method: 'GET',
       });
       if (response && Array.isArray(response)) {

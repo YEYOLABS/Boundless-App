@@ -34,16 +34,16 @@ interface TrailerChecklistItem {
 export default function PostTourScreen() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { user, assignedTask } = useAuth();
   const { fetchData } = useFetch();
-  
+
   // Odometer
   const [odometerReading, setOdometerReading] = useState('');
   const [odometerPhoto, setOdometerPhoto] = useState<string | null>(null);
-  
+
   // Fuel level
   const [fuelPhoto, setFuelPhoto] = useState<string | null>(null);
-  
+
   // Tyre tread depths
   const [tyreData, setTyreData] = useState<TyreData[]>([
     { position: 'Left front', depth: '' },
@@ -53,7 +53,7 @@ export default function PostTourScreen() {
     { position: 'Right rear inner', depth: '' },
     { position: 'Right rear outer', depth: '' },
   ]);
-  
+
   // Trailer
   const [trailerUsed, setTrailerUsed] = useState(false);
   const [trailerChecklist, setTrailerChecklist] = useState<TrailerChecklistItem[]>([
@@ -203,9 +203,9 @@ export default function PostTourScreen() {
   const handleSaveInspection = async () => {
     try {
       setIsSubmitting(true);
-      const tourId = user?.driver?.currentTour || user?.driver?.tour;
+      const tourId = assignedTask?.tour?.id;
       if (!tourId) {
-        Alert.alert('Error', 'Tour ID not found. Please log in again.');
+        Alert.alert('Error', 'No assigned tour found.');
         setIsSubmitting(false);
         return;
       }
@@ -231,7 +231,7 @@ export default function PostTourScreen() {
       console.log('Submitting post-tour check:', body);
 
       const response = await fetchData({
-        endPoint: '/api/v1/check',
+        endPoint: '/submit-inspection',
         method: 'POST',
         data: body,
       });

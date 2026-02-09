@@ -24,7 +24,7 @@ interface ApiTestResult {
   details?: string;
 }
 
-const API_BASE_URL = 'https://boundlessqa.dqi.co.za';
+const API_BASE_URL = 'https://boundless-backend-yeyo-225250995708.europe-west1.run.app/api';
 const API_TIMEOUT = 15000; // 15 seconds
 
 // Check if running on web platform
@@ -41,7 +41,7 @@ async function getAuthToken(): Promise<string | null> {
 
 async function apiCall<T>(
   endpoint: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
   body?: any
 ): Promise<ApiResponse<T>> {
 
@@ -68,12 +68,12 @@ async function apiCall<T>(
       signal: controller.signal,
     };
 
-    if (body && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
+    if (body && (method === 'POST' || method === 'PUT' || method === 'DELETE' || method === 'PATCH')) {
       options.body = JSON.stringify(body);
     }
 
     const fullUrl = `${API_BASE_URL}${endpoint}`;
-  
+
     const response = await fetch(fullUrl, options);
     clearTimeout(timeoutId);
 
@@ -155,7 +155,7 @@ async function apiCall<T>(
     };
   } catch (error: any) {
     clearTimeout(timeoutId);
-    
+
     if (error.name === 'AbortError') {
       console.error('[API] Request timeout');
       return {
@@ -168,7 +168,7 @@ async function apiCall<T>(
     if (error.message && error.message.toLowerCase().includes('cors')) {
       return {
         success: false,
-        error: IS_WEB 
+        error: IS_WEB
           ? 'CORS Error: This API cannot be accessed from web browsers. Please test on iOS or Android device/simulator where CORS does not apply.'
           : 'Network error. Please check your internet connection.',
       };
@@ -176,7 +176,7 @@ async function apiCall<T>(
 
     if (error.message === 'Network request failed' || error.message.includes('fetch')) {
       console.error('[API] Network error:', error.message);
-      
+
       // Provide more helpful error message on web
       if (IS_WEB) {
         return {
@@ -184,7 +184,7 @@ async function apiCall<T>(
           error: 'Network error. If you see CORS errors in the console, the API server needs to enable CORS headers. This app will work normally on iOS and Android.',
         };
       }
-      
+
       return {
         success: false,
         error: 'Network error. Please check your internet connection.',
@@ -202,15 +202,15 @@ async function apiCall<T>(
 
 export async function login(username: string, password: string): Promise<ApiResponse<any>> {
 
-  const response = await apiCall<any>('/api/v1/auth', 'POST', {
+  const response = await apiCall<any>('/api/authenticate', 'POST', {
     username: username,
-    password: password
+    pin: password
   });
-  
+
   if (response.success && response.data) {
     let token = null;
     let driverData = null;
-    
+
     // Extract token - handle different response formats
     if (response.data.accessToken) {
       token = response.data.accessToken;
@@ -223,7 +223,7 @@ export async function login(username: string, password: string): Promise<ApiResp
     } else if (response.data.data?.accessToken) {
       token = response.data.data.accessToken;
     }
-    
+
     // Extract driver data
     if (response.data.driver) {
       driverData = response.data.driver;
@@ -232,11 +232,11 @@ export async function login(username: string, password: string): Promise<ApiResp
     } else if (response.data.data?.driver) {
       driverData = response.data.data.driver;
     }
-    
+
     if (token) {
       await AsyncStorage.setItem('authToken', token);
       console.log('[API] Token stored successfully');
-      
+
       return {
         success: true,
         data: {
@@ -256,7 +256,7 @@ export async function login(username: string, password: string): Promise<ApiResp
       };
     }
   }
-  
+
   console.error('[API] Login failed:', response.error);
   return {
     success: false,
@@ -265,47 +265,43 @@ export async function login(username: string, password: string): Promise<ApiResp
 }
 
 export async function getDriver(): Promise<ApiResponse<any>> {
-  return apiCall('/api/v1/Driver', 'GET');
+  return apiCall('/api/get-drivers', 'GET');
 }
 
 export async function getVehicle(): Promise<ApiResponse<any>> {
-  return apiCall('/api/v1/vehicle', 'GET');
+  return apiCall('/api/get-vehicles', 'GET');
 }
 
 export async function getVehicleById(vehicleId: string): Promise<ApiResponse<any>> {
-  return apiCall(`/api/v1/vehicle/${vehicleId}`, 'GET');
+  return apiCall(`/api/vehicles/${vehicleId}`, 'GET');
 }
 
 export async function getTours(): Promise<ApiResponse<any>> {
-  return apiCall('/api/v1/tours', 'GET');
+  return apiCall('/api/tours', 'GET');
 }
 
 export async function submitDailyCheck(checkData: any): Promise<ApiResponse<any>> {
-  return apiCall('/api/v1/daily-check', 'POST', checkData);
+  return apiCall('/api/submit-inspection', 'POST', checkData);
 }
 
 export async function submitPreTour(tourData: any): Promise<ApiResponse<any>> {
-  return apiCall('/api/v1/pre-tour', 'POST', tourData);
+  return apiCall('/api/submit-inspection', 'POST', tourData);
 }
 
 export async function submitPostTour(tourData: any): Promise<ApiResponse<any>> {
-  return apiCall('/api/v1/post-tour', 'POST', tourData);
+  return apiCall('/api/submit-inspection', 'POST', tourData);
 }
 
-/**
- * Upload a new expense
- * POST /api/v1/expense
- */
 export async function addExpense(expenseData: any): Promise<ApiResponse<any>> {
-  return apiCall('/api/v1/expense', 'POST', expenseData);
+  return apiCall('/api/expenses', 'POST', expenseData);
 }
 
 /**
  * Get list of expenses for a specific float
- * GET /api/v1/expense/list/{floatId}
+ * GET /api/expenses?floatId={floatId}
  */
 export async function getExpensesByFloatId(floatId: number): Promise<ApiResponse<any>> {
-  const response = await apiCall<any>(`/api/v1/expense/list/${floatId}`, 'GET');
+  const response = await apiCall<any>(`/api/expenses?floatId=${floatId}`, 'GET');
 
   // Handle different response formats
   if (response.success && response.data) {
@@ -349,38 +345,53 @@ export async function getExpenses(): Promise<ApiResponse<any>> {
 
 /**
  * Delete an expense for the authenticated driver
- * DELETE /api/v1/expense/delete
+ * DELETE /api/expenses/{id}
  */
 export async function deleteExpense(expenseId: string): Promise<ApiResponse<any>> {
   console.log('[API] Deleting expense:', expenseId);
-  return apiCall('/api/v1/expense/delete', 'DELETE', { id: expenseId });
+  return apiCall(`/api/expenses/${expenseId}`, 'DELETE');
 }
 
 /**
- * Get all inspection types
- * GET /api/v1/inspection/types
+ * Get all inspection items
+ * GET /api/get-inspection-items
  */
 export async function getInspectionTypes(): Promise<ApiResponse<any>> {
   console.log('[API] Fetching inspection types');
-  return apiCall('/api/v1/inspection/types', 'GET');
+  return apiCall('/api/get-inspection-items', 'GET');
 }
 
 /**
- * Get inspection details by type ID
- * GET /api/v1/inspection/{type}
+ * Get inspection items by type
+ * GET /api/get-inspection-items?type={type}
  */
-export async function getInspectionByType(typeId: number): Promise<ApiResponse<any>> {
-  console.log('[API] Fetching inspection by type:', typeId);
-  return apiCall(`/api/v1/inspection/${typeId}`, 'GET');
+export async function getInspectionByType(type: string): Promise<ApiResponse<any>> {
+  console.log('[API] Fetching inspection by type:', type);
+  return apiCall(`/api/get-inspection-items?type=${type}`, 'GET');
 }
 
 /**
  * Submit inspection check results
- * POST /api/v1/check
+ * POST /api/submit-inspection
  */
 export async function submitCheck(checkData: any): Promise<ApiResponse<any>> {
   console.log('[API] Submitting inspection check:', checkData);
-  return apiCall('/api/v1/check', 'POST', checkData);
+  return apiCall('/api/submit-inspection', 'POST', checkData);
+}
+
+export async function getIssues(): Promise<ApiResponse<any>> {
+  console.log('[API] Fetching issues');
+  return apiCall('/issues', 'GET');
+}
+
+export async function createIssue(issueData: any): Promise<ApiResponse<any>> {
+  console.log('[API] Creating issue:', issueData);
+  return apiCall('/issues', 'POST', issueData);
+}
+
+export async function updateIssueStatus(issueId: string, status: string, notes?: string): Promise<ApiResponse<any>> {
+  console.log('[API] Updating issue status:', issueId, status);
+  return apiCall(`/issues/${issueId}/status`, 'PATCH', { status, notes });
 }
 
 export async function getAssignedTask(): Promise<ApiResponse<any>> {
@@ -410,5 +421,8 @@ export default {
   getInspectionByType,
   submitCheck,
   getAssignedTask,
-  isWebPlatform
+  isWebPlatform,
+  getIssues,
+  createIssue,
+  updateIssueStatus
 };

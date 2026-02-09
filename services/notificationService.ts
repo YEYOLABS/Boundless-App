@@ -9,6 +9,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -89,6 +91,7 @@ export async function scheduleDailyCheckNotifications(): Promise<void> {
         hour: MORNING_CHECK_HOUR,
         minute: MORNING_CHECK_MINUTE,
         repeats: true,
+        channelId: 'daily-checks',
       },
     });
     console.log('Scheduled morning check notification at 8:00 AM');
@@ -107,6 +110,7 @@ export async function scheduleDailyCheckNotifications(): Promise<void> {
         hour: EVENING_CHECK_HOUR,
         minute: EVENING_CHECK_MINUTE,
         repeats: true,
+        channelId: 'daily-checks',
       },
     });
     console.log('Scheduled evening check notification at 4:00 PM');
@@ -125,6 +129,7 @@ export async function scheduleDailyCheckNotifications(): Promise<void> {
         hour: MORNING_CHECK_HOUR,
         minute: MORNING_CHECK_MINUTE + REMINDER_DELAY_MINUTES,
         repeats: true,
+        channelId: 'daily-checks',
       },
     });
     console.log('Scheduled morning reminder at 8:15 AM');
@@ -143,6 +148,7 @@ export async function scheduleDailyCheckNotifications(): Promise<void> {
         hour: EVENING_CHECK_HOUR,
         minute: EVENING_CHECK_MINUTE + REMINDER_DELAY_MINUTES,
         repeats: true,
+        channelId: 'daily-checks',
       },
     });
     console.log('Scheduled evening reminder at 4:15 PM');
@@ -160,7 +166,7 @@ export async function scheduleDailyCheckNotifications(): Promise<void> {
  */
 export function getCurrentCheckType(): CheckType {
   const currentHour = new Date().getHours();
-  
+
   // Morning check: 6 AM to 2 PM
   // Evening check: 2 PM to 6 AM next day
   if (currentHour >= 6 && currentHour < 14) {
@@ -177,7 +183,7 @@ export async function hasCompletedCheckToday(type: CheckType): Promise<boolean> 
   try {
     const storageKey = type === 'morning' ? STORAGE_KEY_MORNING : STORAGE_KEY_EVENING;
     const lastCheckData = await AsyncStorage.getItem(storageKey);
-    
+
     if (!lastCheckData) {
       return false;
     }
@@ -232,8 +238,8 @@ export function setupNotificationResponseListener(
     (response) => {
       console.log('Notification response received:', response);
       const { screen, ...data } = response.notification.request.content.data;
-      
-      if (screen) {
+
+      if (screen && typeof screen === 'string') {
         onNotificationResponse(screen, data);
       }
     }
@@ -248,9 +254,9 @@ export function setupNotificationResponseListener(
 export async function initializeNotificationService(): Promise<void> {
   try {
     console.log('Initializing notification service...');
-    
+
     const hasPermission = await requestNotificationPermissions();
-    
+
     if (hasPermission) {
       await scheduleDailyCheckNotifications();
       console.log('Notification service initialized successfully');

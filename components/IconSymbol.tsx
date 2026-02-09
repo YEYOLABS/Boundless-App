@@ -167,6 +167,7 @@ const MAPPING: Record<string, string> = {
   "xmark.circle.fill": "error",
   "plus.circle.fill": "add-circle",
   "clock.arrow.circlepath": "history",
+  "wrench.and.screwdriver": "build",
 };
 
 export type IconSymbolName = string;

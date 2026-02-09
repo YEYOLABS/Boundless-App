@@ -7,9 +7,9 @@ import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useFonts } from "expo-font";
 import { WidgetProvider } from "@/contexts/WidgetContext";
-import { 
-  initializeNotificationService, 
-  setupNotificationResponseListener 
+import {
+  initializeNotificationService,
+  setupNotificationResponseListener
 } from "@/services/notificationService";
 import { useColorScheme, Alert, View, ActivityIndicator, Text, StyleSheet } from "react-native";
 import "react-native-reanimated";
@@ -55,10 +55,10 @@ function RootLayoutNav() {
 
   useEffect(() => {
     initializeNotificationService();
-    
+
     setupNotificationResponseListener((screen, data) => {
       console.log('[Notification] User tapped notification:', screen, data);
-      
+
       if (screen === 'daily-check') {
         router.push('/daily-check');
       }
@@ -86,6 +86,7 @@ function RootLayoutNav() {
         <Stack.Screen name="float-management" options={{ headerShown: false }} />
         <Stack.Screen name="history" options={{ headerShown: false }} />
         <Stack.Screen name="vehicle-details" options={{ headerShown: false }} />
+        <Stack.Screen name="issues" options={{ headerShown: false }} />
         <Stack.Screen
           name="modal"
           options={{

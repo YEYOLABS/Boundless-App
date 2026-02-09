@@ -356,18 +356,20 @@ export default function Inspections() {
                           placeholderTextColor={colors.textSecondary}
                         />
                       ) : item.inputType === 'number_group' ? (
-                        // For number_group, we can render multiple inputs based on fields
+                        // For number_group, we can render multiple inputs with labels
                         <View style={styles.numberGroupContainer}>
                           {item.fields?.map(field => (
-                            <TextInput
-                              key={field}
-                              style={styles.numberGroupInput}
-                              value={itemValues[`${item.key}_${field}`] || ''}
-                              onChangeText={(value) => updateValue(`${item.key}_${field}`, value)}
-                              placeholder={`Enter ${field.replace(/_/g, ' ')}`}
-                              placeholderTextColor={colors.textSecondary}
-                              keyboardType="numeric"
-                            />
+                            <View key={field} style={styles.numberGroupField}>
+                              <Text style={styles.numberGroupLabel}>{field.replace(/_/g, ' ').toUpperCase()}</Text>
+                              <TextInput
+                                style={styles.numberGroupInput}
+                                value={itemValues[`${item.key}_${field}`] || ''}
+                                onChangeText={(value) => updateValue(`${item.key}_${field}`, value)}
+                                placeholder="-- mm"
+                                placeholderTextColor={colors.textSecondary}
+                                keyboardType="numeric"
+                              />
+                            </View>
                           ))}
                         </View>
                       ) : item.inputType === 'photo' ? (
@@ -604,6 +606,17 @@ const styles = StyleSheet.create({
   },
   numberGroupContainer: {
     flex: 1,
+  },
+  numberGroupField: {
+    marginBottom: 12,
+  },
+  numberGroupLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   numberGroupInput: {
     backgroundColor: colors.background,

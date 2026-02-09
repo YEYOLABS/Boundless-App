@@ -2,12 +2,11 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
-//export const BASE_URL = 'https://boundless-backend-225250995708.africa-south1.run.app/api';
-export const BASE_URL ='http://192.168.1.103:1337/api'
-type FetchDataTypes = {endPoint: string; method: 'POST' | 'GET' | 'UPDATE' | 'DELETE'; data?: any;};
+export const BASE_URL = 'https://boundless-backend-yeyo-225250995708.europe-west1.run.app/api'; 
+type FetchDataTypes = { endPoint: string; method: 'POST' | 'GET' | 'UPDATE' | 'DELETE'; data?: any; };
 
 type StatusType = 'success' | 'error' | 'warning' | 'info';
-
+ 
 const useFetch = () => {
     const { user } = useAuth();
     const [status, setStatus] = useState<{ type: StatusType; message: string } | null>(null);
@@ -22,7 +21,7 @@ const useFetch = () => {
             if (user?.token) {
                 headers.Authorization = `Bearer ${user.token}`;
             }
-            let response = await axios({method, url, data, headers});
+            let response = await axios({ method, url, data, headers });
             setStatus({ type: 'success', message: 'Request completed successfully' });
             return response.data;
         } catch (error: any) {
