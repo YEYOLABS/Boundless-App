@@ -35,13 +35,16 @@ export default function LoginScreen() {
     }
 
     setIsLoading(true);
-    const response = await fetchData({endPoint:'/authenticate',method:'POST',data:{pin:password,username:username}});
-    if(response?.data){
+    const response = await fetchData({ endPoint: '/authenticate', method: 'POST', data: { pin: password, username: username } });
+    if (response?.data) {
       console.log('✅ Login successful! Redirecting to dashboard...');
       await AsyncStorage.setItem('user', JSON.stringify(response.data));
+      if (response.data.token) {
+        await AsyncStorage.setItem('authToken', response.data.token);
+      }
       setUser(response.data);
       router.push('/(tabs)/(home)');
-    }else{
+    } else {
       Alert.alert('Login Failed', 'Invalid login details');
     }
     setIsLoading(false)
@@ -60,7 +63,7 @@ export default function LoginScreen() {
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <Image
-                source={require('@/assets/images/771ae94d-a623-49aa-96cb-cc81b395ba89.png')}
+                source={require('@/assets/images/boundless.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />

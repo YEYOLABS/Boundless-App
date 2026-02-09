@@ -37,7 +37,7 @@ type ExpenseType = {
 export default function FloatManagementScreen() {
   const router = useRouter();
   
-  const { user } = useAuth();
+  const { user, assignedTask, setAssignedTask } = useAuth();
   const { fetchData } = useFetch();
 
   const [activeTab, setActiveTab] = useState<TabType>('add');
@@ -48,35 +48,82 @@ export default function FloatManagementScreen() {
     receiptImage: null as string | null,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [refreshingTask, setRefreshingTask] = useState(false);
   const [loading, isloading] = useState(false);
   const [viewReceiptImage, setViewReceiptImage] = useState<string | null>(null);
   const [expenses,setExpenses] = useState<ExpenseType[]>([])
-  const {assignedTask} = useAuth();
+  
+  // Store values in cents (as stored in database)
   const originalBalance = assignedTask?.float?.originalAmount || 0;
   const [remainingAmount, setRemainingAmount] = useState(assignedTask?.float?.remainingAmount || 0);
   const floatId = assignedTask?.float?.id
 
+  // Debug logging to verify values
+  useEffect(() => {
+    console.log('[FloatManagement] Database values (in cents):');
+    console.log('  - originalAmount:', assignedTask?.float?.originalAmount);
+    console.log('  - remainingAmount:', assignedTask?.float?.remainingAmount);
+    console.log('[FloatManagement] Display values (in cents):');
+    console.log('  - originalBalance:', originalBalance);
+    console.log('  - remainingAmount:', remainingAmount);
+  }, [assignedTask?.float, originalBalance, remainingAmount]);
+
   const categories = ['Fuel', 'Toll', 'Parking', 'Maintenance', 'Other'];
 
-  const totalExpenses = originalBalance - remainingAmount;
+  // Calculate total expenses in cents (display in cents)
+  const totalExpensesCents = originalBalance - remainingAmount;
+
+  // Debug totalExpenses calculation
+  useEffect(() => {
+    console.log('[FloatManagement] Calculation check:');
+    console.log('  - originalBalance (cents):', originalBalance);
+    console.log('  - remainingAmount (cents):', remainingAmount);
+    console.log('  - Difference (cents):', totalExpensesCents);
+    console.log('  - Display values (in cents):');
+    console.log('    - Float Balance:', originalBalance);
+    console.log('    - Total Expenses:', totalExpensesCents);
+    console.log('    - Remaining:', remainingAmount || 0);
+  }, [originalBalance, remainingAmount, totalExpensesCents]);
 
   const fetchExpenses = async () => {
     isloading(true);
     try {
-      const response = await fetchData({ endPoint: '/expenses', method: 'GET' });
+      console.log('[FloatManagement] Fetching expenses for floatId:', floatId);
+      
+      if (!floatId) {
+        console.warn('[FloatManagement] No floatId available, cannot fetch expenses');
+        setExpenses([]);
+        isloading(false);
+        return;
+      }
+
+      const response = await fetchData({ 
+        endPoint: `/expenses?floatId=${floatId}`, 
+        method: 'GET' 
+      });
+      
+      console.log('[FloatManagement] Expenses response:', response);
+
       if (response && response.status === 1) {
-        const mappedExpenses: ExpenseType[] = response.data.map((expense: any) => ({
+        const expenseData = Array.isArray(response.data) ? response.data : [];
+        const mappedExpenses: ExpenseType[] = expenseData.map((expense: any) => ({
           id: expense.id,
           category: expense.category,
           description: expense.description || expense.category,
           date: expense.createdAt,
           receiptImage: expense.receiptUrl,
-          amount: expense.amount / 100, // Convert cents to rands
+          amount: expense.amount, // Keep in cents, convert to rands in display
         }));
+        
+        console.log('[FloatManagement] Mapped expenses:', mappedExpenses.length);
         setExpenses(mappedExpenses);
+      } else {
+        console.warn('[FloatManagement] Failed to fetch expenses:', response);
+        setExpenses([]);
       }
     } catch (error) {
-      console.error('Error fetching expenses:', error);
+      console.error('[FloatManagement] Error fetching expenses:', error);
+      setExpenses([]);
     } finally {
       isloading(false);
     }
@@ -88,15 +135,48 @@ export default function FloatManagementScreen() {
     }
   }, [activeTab]);
 
+  // Initial load of expenses on mount
+  useEffect(() => {
+    if (floatId) {
+      fetchExpenses();
+    }
+  }, [floatId]);
+
+  // Update remainingAmount when assignedTask changes (no conversion)
+  useEffect(() => {
+    if (assignedTask?.float?.remainingAmount !== undefined) {
+      setRemainingAmount(assignedTask.float.remainingAmount);
+    }
+  }, [assignedTask?.float?.remainingAmount]);
+
+  const refreshAssignedTask = async () => {
+    setRefreshingTask(true);
+    try {
+      console.log('[FloatManagement] Refreshing assigned task...');
+      const response = await fetchData({ endPoint: '/get-assigned-task', method: 'POST' });
+      if (response && response.data) {
+        setAssignedTask(response.data);
+        console.log('[FloatManagement] Assigned task refreshed:', response.data);
+      } else {
+        console.warn('[FloatManagement] Failed to refresh assigned task');
+      }
+    } catch (error) {
+      console.error('[FloatManagement] Error refreshing assigned task:', error);
+    } finally {
+      setRefreshingTask(false);
+    }
+  };
+
 
   const pickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+      const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      if (status !== 'granted') {
+      if (cameraPermission.status !== 'granted' && mediaLibraryPermission.status !== 'granted') {
         Alert.alert(
           'Permission Required',
-          'Camera permission is required to take photos of receipts.',
+          'Camera or photo library permission is required to add receipt photos.',
           [{ text: 'OK' }]
         );
         return;
@@ -109,6 +189,11 @@ export default function FloatManagementScreen() {
           {
             text: 'Take Photo',
             onPress: async () => {
+              if (cameraPermission.status !== 'granted') {
+                Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
+                return;
+              }
+
               const result = await ImagePicker.launchCameraAsync({
                 mediaTypes: ['images'],
                 allowsEditing: true,
@@ -118,13 +203,21 @@ export default function FloatManagementScreen() {
               });
 
               if (!result.canceled && result.assets[0]) {
+                console.log('[FloatManagement] Camera image selected, base64 length:', result.assets[0].base64?.length || 0);
                 setNewExpense({ ...newExpense, receiptImage: result.assets[0].base64 || null });
+              } else {
+                console.log('[FloatManagement] Camera selection canceled');
               }
             },
           },
           {
             text: 'Choose from Library',
             onPress: async () => {
+              if (mediaLibraryPermission.status !== 'granted') {
+                Alert.alert('Permission Denied', 'Photo library permission is required to select photos.');
+                return;
+              }
+
               const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
                 allowsEditing: true,
@@ -134,7 +227,10 @@ export default function FloatManagementScreen() {
               });
 
               if (!result.canceled && result.assets[0]) {
+                console.log('[FloatManagement] Library image selected, base64 length:', result.assets[0].base64?.length || 0);
                 setNewExpense({ ...newExpense, receiptImage: result.assets[0].base64 || null });
+              } else {
+                console.log('[FloatManagement] Library selection canceled');
               }
             },
           },
@@ -155,31 +251,53 @@ export default function FloatManagementScreen() {
   };
 
   const handleAddExpense = async () => {
+    console.log('[FloatManagement] handleAddExpense called');
+    console.log('[FloatManagement] newExpense:', {
+      category: newExpense.category,
+      amount: newExpense.amount,
+      description: newExpense.description,
+      hasReceiptImage: !!newExpense.receiptImage
+    });
+    console.log('[FloatManagement] assignedTask:', {
+      hasTour: !!assignedTask?.tour,
+      tourId: assignedTask?.tour?.id,
+      hasFloat: !!assignedTask?.float,
+      floatId: assignedTask?.float?.id
+    });
+
     if (!newExpense.category || !newExpense.amount || !newExpense.description) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    const amount = parseFloat(newExpense.amount);
-    if (isNaN(amount) || amount <= 0) {
+    if (!newExpense.receiptImage) {
+      Alert.alert('Error', 'Please add a receipt photo');
+      return;
+    }
+
+    const amountValue = parseFloat(newExpense.amount);
+    if (isNaN(amountValue) || amountValue <= 0) {
       Alert.alert('Error', 'Please enter a valid amount');
       return;
     }
 
-    if (amount > (remainingAmount || 0)) {
+    // Use the value as-is (no conversion needed)
+    const amountToSubmit = amountValue;
+    
+    if (amountToSubmit > (remainingAmount || 0)) {
       Alert.alert(
         'Insufficient Balance',
-        `This expense (R${amount.toFixed(2)}) exceeds your remaining balance (R${remainingAmount.toFixed(2)}).`,
+        `This expense (R${amountValue.toFixed(2)}) exceeds your remaining balance (R${(remainingAmount || 0).toFixed(2)}).`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Add Anyway',
-            onPress: () => submitExpense(amount),
+            onPress: () => submitExpense(amountToSubmit),
           },
         ]
       );
     } else {
-      await submitExpense(amount);
+      await submitExpense(amountToSubmit);
     }
   };
 
@@ -187,10 +305,23 @@ export default function FloatManagementScreen() {
     setSubmitting(true);
 
     try {
-      //const tourId =  user?.driver?.currentTour || user?.driver?.tour;
       const currentTourId = assignedTask?.tour?.id || null;
+      const currentFloatId = assignedTask?.float?.id || floatId;
+      
+      console.log('[FloatManagement] Validation checks:');
+      console.log('  - Tour ID:', currentTourId);
+      console.log('  - Float ID:', currentFloatId);
+      console.log('  - Amount:', amount);
+      console.log('  - Has receipt:', !!newExpense.receiptImage);
+      
       if (!currentTourId) {
-        Alert.alert('Error', 'Tour ID not found. Please log in again.');
+        Alert.alert('Error', 'Tour ID not found. Please refresh and try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      if (!currentFloatId) {
+        Alert.alert('Error', 'Float ID not found. Please refresh and try again.');
         setSubmitting(false);
         return;
       }
@@ -205,30 +336,68 @@ export default function FloatManagementScreen() {
 
       const body = {
         category: newExpense.category,
-        amountCents: Math.round(amount * 100),
+        amountCents: amountCents, // Already in cents
         date,
-        receiptUrl: newExpense.receiptImage
-          ? `data:image/jpeg;base64,${newExpense.receiptImage}`
-          : null,
+        receiptUrl: `data:image/jpeg;base64,${newExpense.receiptImage}`,
         tourId: currentTourId,
-        floatId: floatId || null,
+        floatId: currentFloatId,
         description: newExpense.description,
-      }
-      console.log('Submitting expense:', body);
+      };
+
+      console.log('[FloatManagement] Submitting expense:', {
+        category: body.category,
+        amountCents: body.amountCents,
+        tourId: body.tourId,
+        floatId: body.floatId,
+        description: body.description,
+        receiptUrl: body.receiptUrl ? `[base64 data: ${body.receiptUrl.substring(0, 50)}...]` : null
+      });
+
       const response = await fetchData({ endPoint: '/expenses', method: 'POST', data: body });
-      console.log(response);
+      
+      console.log('[FloatManagement] Response received:');
+      console.log('  - Response exists:', !!response);
+      console.log('  - Response status:', response?.status);
+      console.log('  - Response message:', response?.message);
+      console.log('  - Full response:', JSON.stringify(response, null, 2));
+
       if (!response) {
-        Alert.alert('Error', 'Failed to add expense. Please try again.');
+        console.error('[FloatManagement] No response received from server');
+        Alert.alert('Error', 'Failed to add expense. No response from server.');
+        setSubmitting(false);
         return;
       }
+
       if (response.status === 1) {
-        // Update remaining amount locally
-        setRemainingAmount(prev => prev - Math.round(amount * 100));
+        console.log('[FloatManagement] Expense submitted successfully');
+        
+        // Update remaining amount locally (subtract in cents)
+        setRemainingAmount(prev => {
+          const newAmount = prev - amountCents;
+          console.log('[FloatManagement] Updating remaining amount (cents):', prev, '-', amountCents, '=', newAmount);
+          return newAmount;
+        });
+        
+        // Reset form
         setNewExpense({ category: '', amount: '', description: '', receiptImage: null });
-        Alert.alert('Success', 'Expense added successfully');
-        setActiveTab('history');
+        
+        // Refresh expenses list to show the new expense
+        console.log('[FloatManagement] Fetching updated expenses...');
+        await fetchExpenses();
+        
+        // Refresh assigned task to get updated float balance from server
+        console.log('[FloatManagement] Refreshing assigned task...');
+        await refreshAssignedTask();
+        
+        Alert.alert('Success', 'Expense added successfully', [
+          {
+            text: 'OK',
+            onPress: () => setActiveTab('history')
+          }
+        ]);
       } else {
-        Alert.alert('Error', 'Failed to add expense. Please try again.');
+        const errorMsg = response.message || response.error || 'Failed to add expense. Please try again.';
+        Alert.alert('Error', errorMsg);
       }
     } catch (error: any) {
       console.error('[FloatManagement] Error adding expense:', error);
@@ -375,7 +544,7 @@ export default function FloatManagementScreen() {
         </TouchableOpacity>
       )}
 
-      {remainingAmount< 100 && remainingAmount > 0 && (
+      {remainingAmount < 10000 && remainingAmount > 0 && (
         <View style={styles.warningCard}>
           <IconSymbol name="warning" size={20} color={colors.warning} />
           <Text style={styles.warningText}>
@@ -474,6 +643,19 @@ export default function FloatManagementScreen() {
           headerShown: true,
           title: 'Float Management',
           headerBackTitle: 'Back',
+          headerRight: () => (
+            <TouchableOpacity 
+              onPress={refreshAssignedTask}
+              disabled={refreshingTask}
+              style={{ marginRight: 10 }}
+            >
+              {refreshingTask ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <IconSymbol name="refresh" size={24} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+          ),
         }}
       />
 
@@ -481,14 +663,14 @@ export default function FloatManagementScreen() {
       <View style={styles.balanceCard}>
         <View style={styles.balanceHeader}>
           <Text style={styles.balanceLabel}>Float Balance</Text>
-          <Text style={styles.balanceAmount}>R{originalBalance?.toFixed(2)}</Text>
+          <Text style={styles.balanceAmount}>R{originalBalance.toFixed(2)}</Text>
         </View>
         <View style={styles.balanceDivider} />
         <View style={styles.balanceRow}>
           <View style={styles.balanceItem}>
             <Text style={styles.balanceItemLabel}>Total Expenses</Text>
             <Text style={[styles.balanceItemValue, { color: colors.error }]}>
-              -R{totalExpenses.toFixed(2)}
+              -R{totalExpensesCents.toFixed(2)}
             </Text>
           </View>
           <View style={styles.balanceItem}>
@@ -497,7 +679,7 @@ export default function FloatManagementScreen() {
               styles.balanceItemValue,
               { color: (remainingAmount || 0) < 0 ? colors.error : colors.secondary }
             ]}>
-              R{remainingAmount?.toFixed(2)}
+              {(remainingAmount || 0) < 0 ? '-' : ''}R{Math.abs(remainingAmount || 0).toFixed(2)}
             </Text>
           </View>
         </View>
@@ -559,7 +741,11 @@ export default function FloatManagementScreen() {
                 </TouchableOpacity>
               </View>
               <Image
-                source={{ uri: `data:image/jpeg;base64,${viewReceiptImage}` }}
+                source={{ 
+                  uri: viewReceiptImage.startsWith('http') 
+                    ? viewReceiptImage 
+                    : `data:image/jpeg;base64,${viewReceiptImage}` 
+                }}
                 style={styles.fullReceiptImage}
                 resizeMode="contain"
               />

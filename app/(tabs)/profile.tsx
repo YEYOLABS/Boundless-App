@@ -18,36 +18,7 @@ import * as api from '@/services/api';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
-
-  const [driverInfo, setDriverInfo] = useState<any>(null);
-  const [vehicleInfo, setVehicleInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadProfileData();
-  }, []);
-
-  const loadProfileData = async () => {
-    setLoading(true);
-    try {
-      // Load driver info
-      const driverResponse = await api.getDriver();
-      if (driverResponse.success) {
-        setDriverInfo(driverResponse.data);
-      }
-
-      // Load vehicle info
-      const vehicleResponse = await api.getVehicle();
-      if (vehicleResponse.success) {
-        setVehicleInfo(vehicleResponse.data);
-      }
-    } catch (error) {
-      console.error('Error loading profile data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { user, logout, assignedTask } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -103,7 +74,7 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
             <Image
-              source={require('@/assets/images/771ae94d-a623-49aa-96cb-cc81b395ba89.png')}
+              source={require('@/assets/images/boundless.png')}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -141,45 +112,45 @@ export default function ProfileScreen() {
         ))}
 
         {/* Driver Information */}
-        {driverInfo && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Driver Information</Text>
-            <View style={styles.sectionCard}>
-              <View style={styles.infoRow}>
-                <View style={styles.infoLeft}>
-                  <View style={styles.iconContainer}>
-                    <IconSymbol name="person.fill" size={20} color={colors.primary} />
-                  </View>
-                  <Text style={styles.infoLabel}>Name</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Driver Information</Text>
+          <View style={styles.sectionCard}>
+            <View style={styles.infoRow}>
+              <View style={styles.infoLeft}>
+                <View style={styles.iconContainer}>
+                  <IconSymbol name="person.fill" size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.infoValue}>{driverInfo.name || 'Not provided'}</Text>
+                <Text style={styles.infoLabel}>Name</Text>
               </View>
-              <View style={styles.divider} />
-              <View style={styles.infoRow}>
-                <View style={styles.infoLeft}>
-                  <View style={styles.iconContainer}>
-                    <IconSymbol name="phone.fill" size={20} color={colors.primary} />
-                  </View>
-                  <Text style={styles.infoLabel}>Phone</Text>
+              <Text style={styles.infoValue}>{user?.name || 'Not provided'}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.infoRow}>
+              <View style={styles.infoLeft}>
+                <View style={styles.iconContainer}>
+                  <IconSymbol name="phone.fill" size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.infoValue}>{driverInfo.phone || 'Not provided'}</Text>
+                <Text style={styles.infoLabel}>Username</Text>
               </View>
-              <View style={styles.divider} />
-              <View style={styles.infoRow}>
-                <View style={styles.infoLeft}>
-                  <View style={styles.iconContainer}>
-                    <IconSymbol name="map.fill" size={20} color={colors.primary} />
-                  </View>
-                  <Text style={styles.infoLabel}>Tour</Text>
+              <Text style={styles.infoValue}>{user?.username || 'Not provided'}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.infoRow}>
+              <View style={styles.infoLeft}>
+                <View style={styles.iconContainer}>
+                  <IconSymbol name="map.fill" size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.infoValue}>{driverInfo.currentTour || 'Not provided'}</Text>
+                <Text style={styles.infoLabel}>Current Tour</Text>
               </View>
+              <Text style={styles.infoValue}>
+                {assignedTask?.tour?.tour_name || assignedTask?.tour?.tour_reference || 'No Active Tour'}
+              </Text>
             </View>
           </View>
-        )}
+        </View>
 
         {/* Vehicle Information */}
-        {vehicleInfo && (
+        {assignedTask?.vehicle && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Vehicle Information</Text>
             <View style={styles.sectionCard}>
@@ -190,7 +161,9 @@ export default function ProfileScreen() {
                   </View>
                   <Text style={styles.infoLabel}>Vehicle</Text>
                 </View>
-                <Text style={styles.infoValue}>{vehicleInfo.registration || vehicleInfo.id || 'Not provided'}</Text>
+                <Text style={styles.infoValue}>
+                  {assignedTask.vehicle.model} ({assignedTask.vehicle.licenceNumber})
+                </Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.infoRow}>
@@ -200,7 +173,9 @@ export default function ProfileScreen() {
                   </View>
                   <Text style={styles.infoLabel}>Odometer</Text>
                 </View>
-                <Text style={styles.infoValue}>{vehicleInfo.mileage ? `${vehicleInfo.mileage} km` : 'Not provided'}</Text>
+                <Text style={styles.infoValue}>
+                  {assignedTask.vehicle.odometer ? `${assignedTask.vehicle.odometer} km` : 'Not provided'}
+                </Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.infoRow}>
@@ -210,7 +185,7 @@ export default function ProfileScreen() {
                   </View>
                   <Text style={styles.infoLabel}>Service Due</Text>
                 </View>
-                <Text style={styles.infoValue}>{vehicleInfo.nextService || 'Not provided'}</Text>
+                <Text style={styles.infoValue}>{assignedTask.vehicle.nextService || 'Not provided'}</Text>
               </View>
             </View>
           </View>

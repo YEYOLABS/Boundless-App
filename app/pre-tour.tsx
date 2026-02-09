@@ -36,16 +36,16 @@ interface ChecklistItem {
 
 export default function PreTourScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, assignedTask } = useAuth();
   const { fetchData } = useFetch();
-  
+
   // Odometer state
   const [odometerReading, setOdometerReading] = useState('');
   const [odometerPhoto, setOdometerPhoto] = useState<string | null>(null);
-  
+
   // Trailer state
   const [trailerUsed, setTrailerUsed] = useState(false);
-  
+
   // Main vehicle checklist
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
 
@@ -63,7 +63,7 @@ export default function PreTourScreen() {
 
   // Full inspection data
   const [inspectionData, setInspectionData] = useState<any[]>([]);
-  
+
   const [isUploading, setIsUploading] = useState(false);
 
   const pickImage = async (type: 'odometer' | 'oil') => {
@@ -87,13 +87,13 @@ export default function PreTourScreen() {
         if (type === 'odometer') {
           setOdometerPhoto(result.assets[0].base64 || null);
         } else if (type === 'oil') {
-           // Update the oil level check item with photo
-           setChecklist(items =>
-             items.map(item =>
-               item.id === '75' ? { ...item, photoBase64: result.assets[0].base64 } : item
-             )
-           );
-         }
+          // Update the oil level check item with photo
+          setChecklist(items =>
+            items.map(item =>
+              item.id === '75' ? { ...item, photoBase64: result.assets[0].base64 } : item
+            )
+          );
+        }
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -121,12 +121,12 @@ export default function PreTourScreen() {
         if (type === 'odometer') {
           setOdometerPhoto(result.assets[0].base64 || null);
         } else if (type === 'oil') {
-           setChecklist(items =>
-             items.map(item =>
-               item.id === '75' ? { ...item, photoBase64: result.assets[0].base64 } : item
-             )
-           );
-         }
+          setChecklist(items =>
+            items.map(item =>
+              item.id === '75' ? { ...item, photoBase64: result.assets[0].base64 } : item
+            )
+          );
+        }
       }
     } catch (error) {
       console.error('Error taking photo:', error);
@@ -150,12 +150,12 @@ export default function PreTourScreen() {
     if (type === 'odometer') {
       setOdometerPhoto(null);
     } else if (type === 'oil') {
-       setChecklist(items =>
-         items.map(item =>
-           item.id === '75' ? { ...item, photoBase64: null } : item
-         )
-       );
-     }
+      setChecklist(items =>
+        items.map(item =>
+          item.id === '75' ? { ...item, photoBase64: null } : item
+        )
+      );
+    }
   };
 
   const updateTyreData = (index: number, value: string) => {
@@ -215,7 +215,7 @@ export default function PreTourScreen() {
       Alert.alert('Missing Information', 'Please enter the odometer reading.');
       return;
     }
-    
+
     if (!odometerPhoto) {
       Alert.alert('Missing Photo', 'Please upload a photo of the dashboard odometer.');
       return;
@@ -298,9 +298,9 @@ export default function PreTourScreen() {
 
   const handleSaveInspection = async () => {
     try {
-      const tourId = user?.driver?.currentTour || user?.driver?.tour;
+      const tourId = assignedTask?.tour?.id;
       if (!tourId) {
-        Alert.alert('Error', 'Tour ID not found. Please log in again.');
+        Alert.alert('Error', 'No assigned tour found.');
         return;
       }
 
@@ -413,7 +413,7 @@ export default function PreTourScreen() {
   useEffect(() => {
     const fetchInspectionData = async () => {
       try {
-        const response = await fetchData({ method: 'GET', endPoint: '/api/v1/inspection/3' });
+        const response = await fetchData({ method: 'GET', endPoint: '/get-inspection-items' });
         if (response && Array.isArray(response)) {
           // Categorize items
           const checklistItems: ChecklistItem[] = [];
@@ -503,7 +503,7 @@ export default function PreTourScreen() {
               onChangeText={setOdometerReading}
               keyboardType="numeric"
             />
-            
+
             <View style={styles.photoSection}>
               <Text style={styles.photoLabel}>Dashboard Photo (Required)</Text>
               {odometerPhoto ? (
@@ -551,7 +551,7 @@ export default function PreTourScreen() {
                   <IconSymbol name="camera.fill" size={16} color={colors.warning} />
                 )}
               </TouchableOpacity>
-              
+
               {/* Oil level photo upload (forced) */}
               {item.id === '75' && (
                 <View style={styles.photoSectionInline}>
@@ -639,7 +639,7 @@ export default function PreTourScreen() {
                 <Text style={styles.sectionDescription}>
                   Complete trailer inspection checklist
                 </Text>
-                
+
                 {trailerChecklist.map(item => (
                   <TouchableOpacity
                     key={item.id}

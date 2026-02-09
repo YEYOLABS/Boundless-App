@@ -25,12 +25,24 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useExpenses } from '@/contexts/ExpenseContext';
 import useFetch from '@/hooks/useFetch';
 
+// Helper to get icon based on category
+const getCategoryIcon = (category: string) => {
+  switch (category?.toUpperCase()) {
+    case 'FUEL': return 'fuelpump.fill';
+    case 'TOLL': return 'road.lanes'; // mapped to specific icon if available or fallback
+    case 'MAINTENANCE': return 'wrench.and.screwdriver';
+    case 'FOOD': return 'fork.knife';
+    case 'ACCOMMODATION': return 'bed.double.fill';
+    default: return 'dollarsign.circle.fill';
+  }
+};
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { logout, user, assignedTask, setAssignedTask } = useAuth();
   const { fetchData } = useFetch();
-  //const { expenses, floatBalance, getRemainingBalance, refreshExpenses } = useExpenses();
-  
+  const { expenses, floatBalance, getRemainingBalance, refreshExpenses } = useExpenses();
+
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [tours, setTours] = useState<any[]>([]);
@@ -50,7 +62,7 @@ export default function DashboardScreen() {
   const loadDashboardData = async () => {
     setLoading(true);
     setApiError(null);
-    
+
     try {
       const driverResponse = await api.getDriver();
       if (driverResponse.success) {
@@ -61,7 +73,7 @@ export default function DashboardScreen() {
 
       const vehicleResponse = await api.getVehicle();
       if (vehicleResponse.success) {
-       // setVehicleInfo(vehicleResponse.data);
+        // setVehicleInfo(vehicleResponse.data);
       } else {
         console.error('[Dashboard] Failed to load vehicle info:', vehicleResponse.error);
       }
@@ -119,8 +131,8 @@ export default function DashboardScreen() {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
+        {
+          text: 'Logout',
           style: 'destructive',
           onPress: () => {
             logout();
@@ -172,7 +184,7 @@ export default function DashboardScreen() {
 
   useEffect(() => {
 
-  },[])
+  }, [])
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -186,7 +198,7 @@ export default function DashboardScreen() {
             <View style={styles.errorContainer}>
               <IconSymbol name="warning" size={24} color="#f44336" style={styles.errorIcon} />
               <Text style={styles.errorText}>{apiError}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.retryButton}
                 onPress={loadDashboardData}
               >
@@ -202,7 +214,7 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      
+
       <ScrollView
         style={styles.scrollView}
         refreshControl={
@@ -240,23 +252,24 @@ export default function DashboardScreen() {
               </TouchableOpacity>
             </View>
           </View>
-          
+
           <Text style={[styles.welcomeText, { color: colors.text }]}>
             Welcome back, {user?.name}!
           </Text>
           <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </Text>
 
         </View>
 
         {/* Assigned Task */}
-        {/* {assignedTask && (
+        {/* Assigned Task */}
+        {assignedTask && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Assigned Task</Text>
             <View style={styles.card}>
@@ -280,13 +293,13 @@ export default function DashboardScreen() {
                 <View style={styles.infoRow}>
                   <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Float Balance:</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>
-                    R {(assignedTask.float.remainingAmount / 100).toFixed(2)}
+                    R {(assignedTask.float.remainingAmount || 0).toFixed(2)}
                   </Text>
                 </View>
               )}
             </View>
           </View>
-        )} */}
+        )}
 
         {/* Daily Check Status */}
         <View style={styles.section}>
@@ -309,7 +322,7 @@ export default function DashboardScreen() {
             {!hasCompletedToday && (
               <TouchableOpacity
                 style={[buttonStyles.primary, { marginTop: 12 }]}
-                onPress={() => router.push(`/inspections?inspectionType=${checkStatus === 'morning'?'PreTour':'evening'}`)}
+                onPress={() => router.push(`/inspections?inspectionType=${checkStatus === 'morning' ? 'PreTour' : 'evening'}`)}
               >
                 <Text style={buttonStyles.text}>Complete Check</Text>
               </TouchableOpacity>
@@ -326,8 +339,8 @@ export default function DashboardScreen() {
               <IconSymbol name="arrow-forward" size={24} color={colors.primary} />
             </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.card}
             onPress={() => router.push('/float-management')}
             activeOpacity={0.7}
@@ -335,19 +348,19 @@ export default function DashboardScreen() {
             <View style={styles.floatHeader}>
               <Text style={[styles.floatLabel, { color: colors.textSecondary }]}>Current Balance</Text>
               <Text style={[styles.floatAmount, { color: (assignedTask?.float?.originalAmount || 0) < 100 ? '#f44336' : colors.primary }]}>
-                R{assignedTask?.float?.originalAmount?.toFixed(2)}
+                R{(assignedTask?.float?.originalAmount || 0).toFixed(2)}
               </Text>
             </View>
-            
+
             <View style={styles.floatSummary}>
               <View style={styles.floatSummaryItem}>
                 <Text style={[styles.floatSummaryLabel, { color: colors.textSecondary }]}>
                   Remaining
                 </Text>
-                <Text style={[styles.floatSummaryValue, { 
-                  color: 5000 < 0 ? '#f44336' : colors.secondary 
+                <Text style={[styles.floatSummaryValue, {
+                  color: (assignedTask?.float?.remainingAmount || 0) < 0 ? '#f44336' : colors.secondary
                 }]}>
-                  R {(assignedTask?.float?.remainingAmount || 0)?.toFixed(2)}
+                  R {(assignedTask?.float?.remainingAmount || 0).toFixed(2)}
                 </Text>
               </View>
               <View style={styles.floatSummaryItem}>
@@ -355,11 +368,11 @@ export default function DashboardScreen() {
                   Expenses
                 </Text>
                 <Text style={[styles.floatSummaryValue, { color: colors.text }]}>
-                  {2}
+                  {expenses.length}
                 </Text>
               </View>
             </View>
-            
+
             {(assignedTask?.float?.remainingAmount || 0) < 100 && (assignedTask?.float?.remainingAmount || 0) > 0 && (
               <View style={styles.warningBanner}>
                 <IconSymbol name="warning" size={20} color="#f44336" />
@@ -367,15 +380,15 @@ export default function DashboardScreen() {
               </View>
             )}
 
-            {/* {expenses.length > 0 && (
+            {expenses.length > 0 && (
               <View style={styles.expensesList}>
                 <Text style={[styles.expensesTitle, { color: colors.text }]}>Recent Expenses</Text>
                 {expenses.slice(0, 3).map((expense) => (
                   <View key={expense.id} style={styles.expenseItem}>
                     <View style={styles.expenseItemLeft}>
-                      <IconSymbol 
-                        name={getCategoryIcon(expense.category)} 
-                        size={24} 
+                      <IconSymbol
+                        name={getCategoryIcon(expense.category)}
+                        size={24}
                         color={colors.primary}
                       />
                       <View style={styles.expenseItemInfo}>
@@ -400,7 +413,7 @@ export default function DashboardScreen() {
                   </Text>
                 )}
               </View>
-            )} */}
+            )}
           </TouchableOpacity>
         </View>
 
@@ -431,13 +444,21 @@ export default function DashboardScreen() {
               <IconSymbol name="assignment-turned-in" size={32} color={colors.primary} />
               <Text style={[styles.actionTitle, { color: colors.text }]}>Post-Tour</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push('/inspections?inspectionType=evening')}
             >
               <IconSymbol name="brightness-2" size={32} color={colors.primary} />
               <Text style={[styles.actionTitle, { color: colors.text }]}>Evening Tour</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push('/issues')}
+            >
+              <IconSymbol name="wrench.and.screwdriver" size={32} color={colors.primary} />
+              <Text style={[styles.actionTitle, { color: colors.text }]}>Vehicle Issues</Text>
             </TouchableOpacity>
           </View>
         </View>
