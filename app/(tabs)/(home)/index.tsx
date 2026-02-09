@@ -52,6 +52,7 @@ export default function DashboardScreen() {
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [testingApi, setTestingApi] = useState(false);
+  const [localExpenses, setLocalExpenses] = useState<any[]>([]);
 
   useEffect(() => {
     console.log('[Dashboard] Component mounted');
@@ -109,11 +110,36 @@ export default function DashboardScreen() {
       if (response) {
         setAssignedTask(response.data);
         console.log('[Dashboard] Assigned task:', response.data);
+        
+        // Fetch expenses if float exists
+        if (response.data?.float?.id) {
+          await loadExpenses(response.data.float.id);
+        }
       } else {
         console.error('[Dashboard] Failed to fetch assigned task');
       }
     } catch (error) {
       console.error('[Dashboard] Error loading assigned task:', error);
+    }
+  };
+
+  const loadExpenses = async (floatId: number) => {
+    try {
+      const response = await fetchData({ 
+        endPoint: `/expenses?floatId=${floatId}`, 
+        method: 'GET' 
+      });
+      
+      if (response && response.status === 1) {
+        const expenseData = Array.isArray(response.data) ? response.data : [];
+        setLocalExpenses(expenseData);
+        console.log('[Dashboard] Loaded expenses:', expenseData.length);
+      } else {
+        setLocalExpenses([]);
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error loading expenses:', error);
+      setLocalExpenses([]);
     }
   };
 
@@ -369,7 +395,7 @@ export default function DashboardScreen() {
                   Expenses
                 </Text>
                 <Text style={[styles.floatSummaryValue, { color: colors.text }]}>
-                  {expenses.length}
+                  {localExpenses.length}
                 </Text>
               </View>
             </View>
@@ -378,41 +404,6 @@ export default function DashboardScreen() {
               <View style={styles.warningBanner}>
                 <IconSymbol name="warning" size={20} color="#f44336" />
                 <Text style={styles.warningText}>Low balance warning!</Text>
-              </View>
-            )}
-
-            {expenses.length > 0 && (
-              <View style={styles.expensesList}>
-                <Text style={[styles.expensesTitle, { color: colors.text }]}>Recent Expenses</Text>
-                {expenses.slice(0, 3).map((expense) => (
-                  <View key={expense.id} style={styles.expenseItem}>
-                    <View style={styles.expenseItemLeft}>
-                      <IconSymbol
-                        name={getCategoryIcon(expense.category)}
-                        size={24}
-                        color={colors.primary}
-                      />
-                      <View style={styles.expenseItemInfo}>
-                        <Text style={[styles.expenseCategory, { color: colors.text }]}>
-                          {expense.date}
-                        </Text>
-                        <Text style={[styles.expenseDescription, { color: colors.textSecondary }]} numberOfLines={1}>
-                          {expense.description}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.expenseItemRight}>
-                      <Text style={[styles.expenseAmount, { color: '#f44336' }]}>
-                        -R {expense.amount.toFixed(2)}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-                {expenses.length > 3 && (
-                  <Text style={[styles.viewMoreText, { color: colors.primary }]}>
-                    View all {expenses.length} expenses →
-                  </Text>
-                )}
               </View>
             )}
           </TouchableOpacity>
