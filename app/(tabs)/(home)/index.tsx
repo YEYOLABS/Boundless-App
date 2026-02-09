@@ -320,7 +320,7 @@ export default function DashboardScreen() {
                 <View style={styles.infoRow}>
                   <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Float Balance:</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>
-                    R {(assignedTask.float.remainingAmount || 0).toFixed(2)}
+                    R {((assignedTask.float.remainingAmount || 0) / 100).toFixed(2)}
                   </Text>
                 </View>
               )}
@@ -374,8 +374,8 @@ export default function DashboardScreen() {
           >
             <View style={styles.floatHeader}>
               <Text style={[styles.floatLabel, { color: colors.textSecondary }]}>Current Balance</Text>
-              <Text style={[styles.floatAmount, { color: (assignedTask?.float?.originalAmount || 0) < 100 ? '#f44336' : colors.primary }]}>
-                R{(assignedTask?.float?.originalAmount || 0).toFixed(2)}
+              <Text style={[styles.floatAmount, { color: (assignedTask?.float?.originalAmount || 0) < 10000 ? '#f44336' : colors.primary }]}>
+                R{((assignedTask?.float?.originalAmount || 0) / 100).toFixed(2)}
               </Text>
             </View>
 
@@ -387,7 +387,7 @@ export default function DashboardScreen() {
                 <Text style={[styles.floatSummaryValue, {
                   color: (assignedTask?.float?.remainingAmount || 0) < 0 ? '#f44336' : colors.secondary
                 }]}>
-                  R {(assignedTask?.float?.remainingAmount || 0).toFixed(2)}
+                  R {((assignedTask?.float?.remainingAmount || 0) / 100).toFixed(2)}
                 </Text>
               </View>
               <View style={styles.floatSummaryItem}>
@@ -400,7 +400,7 @@ export default function DashboardScreen() {
               </View>
             </View>
 
-            {(assignedTask?.float?.remainingAmount || 0) < 100 && (assignedTask?.float?.remainingAmount || 0) > 0 && (
+            {(assignedTask?.float?.remainingAmount || 0) < 10000 && (assignedTask?.float?.remainingAmount || 0) > 0 && (
               <View style={styles.warningBanner}>
                 <IconSymbol name="warning" size={20} color="#f44336" />
                 <Text style={styles.warningText}>Low balance warning!</Text>

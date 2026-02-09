@@ -287,7 +287,7 @@ export default function FloatManagementScreen() {
     if (amountToSubmit > (remainingAmount || 0)) {
       Alert.alert(
         'Insufficient Balance',
-        `This expense (R${amountValue.toFixed(2)}) exceeds your remaining balance (R${(remainingAmount || 0).toFixed(2)}).`,
+        `This expense (R${amountValue.toFixed(2)}) exceeds your remaining balance (R${((remainingAmount || 0) / 100).toFixed(2)}).`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -308,10 +308,14 @@ export default function FloatManagementScreen() {
       const currentTourId = assignedTask?.tour?.id || null;
       const currentFloatId = assignedTask?.float?.id || floatId;
       
+      // Convert amount to cents (amount is already in rands from user input)
+      const amountCents = Math.round(amount * 100);
+      
       console.log('[FloatManagement] Validation checks:');
       console.log('  - Tour ID:', currentTourId);
       console.log('  - Float ID:', currentFloatId);
-      console.log('  - Amount:', amount);
+      console.log('  - Amount (rands):', amount);
+      console.log('  - Amount (cents):', amountCents);
       console.log('  - Has receipt:', !!newExpense.receiptImage);
       
       if (!currentTourId) {
@@ -622,7 +626,7 @@ export default function FloatManagementScreen() {
               )}
             </View>
             <View style={styles.expenseRight}>
-              <Text style={styles.expenseAmount}>-R{expense.amount.toFixed(2)}</Text>
+              <Text style={styles.expenseAmount}>-R{(expense.amount / 100).toFixed(2)}</Text>
               <TouchableOpacity
                 onPress={() => handleDeleteExpense(expense.id)}
                 style={styles.deleteButton}
@@ -663,14 +667,14 @@ export default function FloatManagementScreen() {
       <View style={styles.balanceCard}>
         <View style={styles.balanceHeader}>
           <Text style={styles.balanceLabel}>Float Balance</Text>
-          <Text style={styles.balanceAmount}>R{originalBalance.toFixed(2)}</Text>
+          <Text style={styles.balanceAmount}>R{(originalBalance / 100).toFixed(2)}</Text>
         </View>
         <View style={styles.balanceDivider} />
         <View style={styles.balanceRow}>
           <View style={styles.balanceItem}>
             <Text style={styles.balanceItemLabel}>Total Expenses</Text>
             <Text style={[styles.balanceItemValue, { color: colors.error }]}>
-              -R{totalExpensesCents.toFixed(2)}
+              -R{(totalExpensesCents / 100).toFixed(2)}
             </Text>
           </View>
           <View style={styles.balanceItem}>
@@ -679,7 +683,7 @@ export default function FloatManagementScreen() {
               styles.balanceItemValue,
               { color: (remainingAmount || 0) < 0 ? colors.error : colors.secondary }
             ]}>
-              {(remainingAmount || 0) < 0 ? '-' : ''}R{Math.abs(remainingAmount || 0).toFixed(2)}
+              {(remainingAmount || 0) < 0 ? '-' : ''}R{(Math.abs(remainingAmount || 0) / 100).toFixed(2)}
             </Text>
           </View>
         </View>
