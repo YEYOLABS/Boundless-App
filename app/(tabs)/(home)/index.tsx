@@ -57,6 +57,7 @@ export default function DashboardScreen() {
     console.log('[Dashboard] Component mounted');
     loadAssignedTask();
     loadDailyCheckStatus();
+    refreshExpenses();
   }, []);
 
   const loadDashboardData = async () => {
@@ -118,9 +119,9 @@ export default function DashboardScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    //await loadDashboardData();
+    await loadAssignedTask();
     await loadDailyCheckStatus();
-    //await refreshExpenses();
+    await refreshExpenses();
     setRefreshing(false);
   };
 
