@@ -2,11 +2,11 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const BASE_URL = 'https://boundless-backend-yeyo-225250995708.europe-west1.run.app/api'; 
+export const BASE_URL = 'https://boundless-327131710311.europe-west1.run.app/api';
 type FetchDataTypes = { endPoint: string; method: 'POST' | 'GET' | 'UPDATE' | 'DELETE'; data?: any; };
 
 type StatusType = 'success' | 'error' | 'warning' | 'info';
- 
+
 const useFetch = () => {
     const { user } = useAuth();
     const [status, setStatus] = useState<{ type: StatusType; message: string } | null>(null);

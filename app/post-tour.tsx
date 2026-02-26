@@ -66,35 +66,59 @@ export default function PostTourScreen() {
   ]);
 
   const pickImage = async (type: 'odometer' | 'fuel') => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 0.8,
-      base64: true,
-    });
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!result.canceled && result.assets[0]) {
-      if (type === 'odometer') {
-        setOdometerPhoto(result.assets[0].base64 || null);
-      } else {
-        setFuelPhoto(result.assets[0].base64 || null);
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to upload images.');
+        return;
       }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        if (type === 'odometer') {
+          setOdometerPhoto(result.assets[0].base64 || null);
+        } else {
+          setFuelPhoto(result.assets[0].base64 || null);
+        }
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
   };
 
   const takePhoto = async (type: 'odometer' | 'fuel') => {
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      quality: 0.8,
-      base64: true,
-    });
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 
-    if (!result.canceled && result.assets[0]) {
-      if (type === 'odometer') {
-        setOdometerPhoto(result.assets[0].base64 || null);
-      } else {
-        setFuelPhoto(result.assets[0].base64 || null);
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Required', 'Please allow access to your camera to take photos.');
+        return;
       }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        if (type === 'odometer') {
+          setOdometerPhoto(result.assets[0].base64 || null);
+        } else {
+          setFuelPhoto(result.assets[0].base64 || null);
+        }
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
     }
   };
 

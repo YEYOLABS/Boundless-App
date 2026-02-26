@@ -1,0 +1,107 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                    IMAGE PICKER FIX - QUICK GUIDE                    ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+PROBLEM: "Failed to pick image" error in pre-tour and post-tour inspections
+
+SOLUTION: Fixed permission handling and API syntax in post-tour.tsx
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                         WHAT WAS CHANGED                             ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+✅ post-tour.tsx - Added permission checks and fixed mediaTypes syntax
+✅ app.json - Added Android 13+ permission (READ_MEDIA_IMAGES)
+✅ pre-tour.tsx - Already correct, no changes needed
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                      REBUILD THE APP (CHOOSE ONE)                    ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+OPTION 1: Quick Development Test
+─────────────────────────────────
+cd Boundless-App
+npx expo start --clear
+
+Then on your device:
+- Shake device → Reload
+- Or clear app data and reopen
+
+OPTION 2: Clean Rebuild (Recommended)
+──────────────────────────────────────
+cd Boundless-App
+npx expo prebuild --clean
+npx expo run:android    (or run:ios)
+
+OPTION 3: Production Build
+───────────────────────────
+cd Boundless-App
+eas build --platform android --profile preview
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                      AFTER REBUILD - TEST THIS                       ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+1. Open Pre-Tour Inspection
+2. Tap "Upload Photo" for odometer
+3. Select "Take Photo" → Camera should open ✓
+4. Go back, tap "Upload Photo" again
+5. Select "Choose from Library" → Gallery should open ✓
+6. Repeat for oil level photo
+7. Test Post-Tour inspection the same way
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                    IF STILL NOT WORKING                              ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+1. Check device permissions:
+   Settings → Apps → Boundless Driver → Permissions
+   - Camera: Allow
+   - Photos/Storage: Allow
+
+2. Clear app data completely:
+   Settings → Apps → Boundless Driver → Storage → Clear Data
+
+3. Uninstall and reinstall the app
+
+4. Try on a different device/emulator
+
+5. Check console logs:
+   npx expo start
+   (Look for error messages when you try to pick image)
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                         TECHNICAL DETAILS                            ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+Root Cause:
+- Missing permission request before accessing camera/gallery
+- Wrong mediaTypes syntax: ['images'] instead of MediaTypeOptions.Images
+- No error handling
+
+Fix Applied:
+- Added requestMediaLibraryPermissionsAsync() before gallery access
+- Added requestCameraPermissionsAsync() before camera access
+- Fixed mediaTypes to use ImagePicker.MediaTypeOptions.Images
+- Added try-catch error handling
+- Added user-friendly error alerts
+- Added Android 13+ permission support
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                         MORE INFORMATION                             ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+See detailed documentation:
+- IMAGE_PICKER_FIX.md - Complete fix explanation
+- REBUILD_INSTRUCTIONS.md - Step-by-step rebuild guide
+- CHANGES_SUMMARY.md - Technical changes and code comparison
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                              SUMMARY                                 ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+The image picker should now work correctly in both pre-tour and post-tour
+inspections. The app will properly request permissions and handle errors.
+
+If you encounter any issues after rebuilding, check the detailed guides
+or review the console logs for specific error messages.

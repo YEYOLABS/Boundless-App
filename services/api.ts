@@ -24,7 +24,7 @@ interface ApiTestResult {
   details?: string;
 }
 
-const API_BASE_URL = 'https://boundless-backend-yeyo-225250995708.europe-west1.run.app/api';
+const API_BASE_URL = 'https://boundless-327131710311.europe-west1.run.app/api';
 const API_TIMEOUT = 15000; // 15 seconds
 
 // Check if running on web platform
